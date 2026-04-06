@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Horaires">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Tracker Horaires</title>
+<style>
+:root {
+  --bg: #0f0f0f;
+  --bg2: #1a1a1a;
+  --bg3: #242424;
+  --bg4: #2e2e2e;
+  --border: rgba(255,255,255,0.09);
+  --border2: rgba(255,255,255,0.16);
+  --text: #f0f0f0;
+  --text2: #888;
+  --text3: #555;
+  --green: #34d399;
+  --green-bg: rgba(52,211,153,0.12);
+  --green-border: rgba(52,211,153,0.3);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.12);
+  --blue-border: rgba(96,165,250,0.3);
+  --amber: #fbbf24;
+  --amber-bg: rgba(251,191,36,0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f5f5;
+    --bg2: #ffffff;
+    --bg3: #ebebeb;
+    --bg4: #e0e0e0;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+    --text: #111;
+    --text2: #666;
+    --text3: #aaa;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;color:var(--text);display:flex;flex-direction:column;}
+
+/* LAYOUT */
+.app{display:flex;flex-direction:column;height:100%;padding-top:var(--safe-top);}
+.header{padding:14px 18px 10px;border-bottom:0.5px solid var(--border);flex-shrink:0}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.header-day{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em}
+.header-date{font-size:17px;font-weight:600;color:var(--text)}
+.today-pill{font-size:10px;background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:20px;border:0.5px solid var(--blue-border)}
+.day-nav{display:flex;align-items:center;gap:8px}
+.nav-arrow{background:var(--bg3);border:0.5px solid var(--border);border-radius:20px;color:var(--text2);font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+
+/* TABS */
+.tabs{display:flex;background:var(--bg3);margin:10px 14px 0;border-radius:var(--radius-sm);padding:3px;flex-shrink:0}
+.tab{flex:1;padding:7px 4px;font-size:12px;font-weight:500;background:none;border:none;color:var(--text2);border-radius:6px;cursor:pointer;letter-spacing:0.02em;transition:all 0.15s;}
+.tab.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+
+/* SCROLL CONTENT */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;padding-bottom:calc(16px + var(--safe-bot));}
+.panel{display:none}.panel.active{display:block}
+
+/* SERVICE CARD */
+.svc{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.svc.off{opacity:0.5}
+.svc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.svc-label{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text2);font-weight:600}
+.svc-dur{font-size:13px;font-weight:600;color:var(--text)}
+.tog{font-size:12px;font-weight:500;padding:5px 12px;border-radius:20px;border:0.5px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;letter-spacing:0.02em;}
+.tog.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+
+/* DRUM */
+.time-row{display:flex;align-items:center;margin-bottom:10px;gap:10px}
+.time-label{font-size:11px;color:var(--text2);min-width:54px;font-weight:500}
+.drums{display:flex;align-items:center;gap:3px}
+.drum{width:52px;height:88px;overflow:hidden;position:relative;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-sm);cursor:ns-resize;user-select:none;-webkit-user-select:none;touch-action:none;}
+.drum::before,.drum::after{content:'';position:absolute;left:0;right:0;height:24px;z-index:2;pointer-events:none}
+.drum::before{top:0;background:linear-gradient(to bottom,var(--bg3) 0%,transparent 100%)}
+.drum::after{bottom:0;background:linear-gradient(to top,var(--bg3) 0%,transparent 100%)}
+.drum-sel{position:absolute;top:50%;left:0;right:0;height:30px;transform:translateY(-50%);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);z-index:1;pointer-events:none}
+.drum-list{position:absolute;left:0;right:0;top:0;will-change:transform}
+.drum-item{height:30px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+.drum-sep{font-size:20px;font-weight:300;color:var(--text3);padding-bottom:2px}
+.time-val{font-size:15px;font-weight:600;min-width:44px;font-variant-numeric:tabular-nums}
+.time-val.in{color:var(--green)}
+.time-val.out{color:var(--blue)}
+.time-val.off{color:var(--text3)}
+
+/* FIELDS */
+.divider{height:0.5px;background:var(--border);margin:12px 0}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:var(--text2);font-weight:500}
+.field input{font-size:16px;font-variant-numeric:tabular-nums;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:8px;color:var(--text);text-align:center;width:100%;-webkit-appearance:none;}
+.field input:focus{outline:none;border-color:var(--border2)}
+
+/* SUMMARY BAR */
+.sum-bar{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px}
+.sum-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.sum-col label{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text2);display:block;margin-bottom:2px}
+.sum-col span{font-size:18px;font-weight:600;color:var(--text)}
+.sum-col span.hi{color:var(--blue)}
+
+/* SAVE */
+.save-btn{width:100%;padding:14px;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius);font-size:15px;font-weight:600;color:var(--text);cursor:pointer;letter-spacing:0.02em;transition:all 0.15s;}
+.save-btn:active{transform:scale(0.98);background:var(--bg4)}
+.save-btn.saved{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.repos-badge{display:inline-block;font-size:11px;background:var(--bg3);color:var(--text2);padding:3px 10px;border-radius:20px;border:0.5px solid var(--border);margin-top:4px}
+
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:8px}
+.cdow{font-size:10px;color:var(--text3);text-align:center;padding:4px 0;text-transform:uppercase;letter-spacing:0.06em}
+.cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;border-radius:8px;cursor:pointer;color:var(--text3);position:relative;}
+.cd.has{color:var(--text);font-weight:600}
+.cd.has::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--blue)}
+.cd.repos::after{background:var(--text3)}
+.cd.tday{border:1px solid var(--blue);color:var(--blue)}
+.cd.sel{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.cd.empty{pointer-events:none}
+.cd:active{background:var(--bg3)}
+.cal-legend{display:flex;gap:14px;font-size:11px;color:var(--text3);padding:4px 2px;margin-bottom:12px}
+
+/* RÉSUMÉS */
+.stabs{display:flex;background:var(--bg3);border-radius:var(--radius-sm);padding:3px;margin-bottom:12px}
+.stab{flex:1;padding:7px 4px;font-size:12px;font-weight:500;background:none;border:none;color:var(--text2);border-radius:6px;cursor:pointer;letter-spacing:0.02em;transition:all 0.15s;}
+.stab.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+.sum-period{font-size:13px;font-weight:600;color:var(--text);text-align:center;padding:6px 0 14px}
+.big-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.big-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px}
+.big-card-l{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text2);margin-bottom:4px}
+.big-card-v{font-size:22px;font-weight:700;color:var(--text)}
+.big-card-v.accent{color:var(--blue)}
+.big-card-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.mini-card{background:var(--bg3);border-radius:var(--radius-sm);padding:10px}
+.mini-l{font-size:10px;color:var(--text2);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.06em}
+.mini-v{font-size:17px;font-weight:600;color:var(--text)}
+.hist-label{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);padding:8px 0 6px;border-top:0.5px solid var(--border)}
+.hist-rows{display:flex;flex-direction:column;gap:6px}
+.hr-item{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
+.hr-item.repos{background:var(--bg3);border-style:dashed}
+.hr-date{font-size:13px;font-weight:600;color:var(--text)}
+.hr-right{display:flex;gap:10px;align-items:center}
+.hr-chip{font-size:11px;color:var(--text2)}
+.hr-chip b{color:var(--text);font-weight:600}
+.repos-tag{font-size:10px;color:var(--text3);border:0.5px solid var(--border);border-radius:4px;padding:2px 7px}
+.empty-msg{text-align:center;padding:2rem 0;font-size:14px;color:var(--text3)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div class="day-nav">
+        <div class="nav-arrow" onclick="nd(-1)">‹</div>
+        <div>
+          <div class="header-day" id="dn"></div>
+          <div class="header-date" id="dd"></div>
+        </div>
+        <div class="nav-arrow" onclick="nd(1)">›</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+        <span id="today-pill"></span>
+        <span id="repos-ind"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="sw('day',this)">Journée</button>
+    <button class="tab" onclick="sw('cal',this)">Calendrier</button>
+    <button class="tab" onclick="sw('sum',this)">Résumés</button>
+  </div>
+
+  <!-- PANELS -->
+  <div class="content">
+
+    <!-- JOURNÉE -->
+    <div class="panel active" id="p-day">
+
+      <!-- MIDI -->
+      <div class="svc off" id="svc-midi">
+        <div class="svc-head">
+          <span class="svc-label">Service midi</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="svc-dur" id="dur-m">—</span>
+            <button class="tog" id="tog-midi" onclick="toggleSvc('midi')">Travaillé</button>
+          </div>
+        </div>
+        <div class="time-row">
+          <span class="time-label">Arrivée</span>
+          <div class="drums">
+            <div class="drum" id="dh-mi-in"></div>
+            <div class="drum-sep">:</div>
+            <div class="drum" id="dm-mi-in"></div>
+          </div>
+          <span class="time-val in off" id="tv-mi-in">--:--</span>
+        </div>
+        <div class="time-row">
+          <span class="time-label">Départ</span>
+          <div class="drums">
+            <div class="drum" id="dh-mi-out"></div>
+            <div class="drum-sep">:</div>
+            <div class="drum" id="dm-mi-out"></div>
+          </div>
+          <span class="time-val out off" id="tv-mi-out">--:--</span>
+        </div>
+        <div class="divider"></div>
+        <div class="field-grid">
+          <div class="field"><label>Couverts midi</label><input id="f-cm" type="number" inputmode="numeric" min="0" placeholder="0" oninput="oF()"></div>
+          <div class="field"><label>À emporter midi</label><input id="f-em" type="number" inputmode="numeric" min="0" placeholder="0" oninput="oF()"></div>
+        </div>
+      </div>
+
+      <!-- SOIR -->
+      <div class="svc off" id="svc-soir">
+        <div class="svc-head">
+          <span class="svc-label">Service soir</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="svc-dur" id="dur-s">—</span>
+            <button class="tog" id="tog-soir" onclick="toggleSvc('soir')">Travaillé</button>
+          </div>
+        </div>
+        <div class="time-row">
+          <span class="time-label">Arrivée</span>
+          <div class="drums">
+            <div class="drum" id="dh-so-in"></div>
+            <div class="drum-sep">:</div>
+            <div class="drum" id="dm-so-in"></div>
+          </div>
+          <span class="time-val in off" id="tv-so-in">--:--</span>
+        </div>
+        <div class="time-row">
+          <span class="time-label">Départ</span>
+          <div class="drums">
+            <div class="drum" id="dh-so-out"></div>
+            <div class="drum-sep">:</div>
+            <div class="drum" id="dm-so-out"></div>
+          </div>
+          <span class="time-val out off" id="tv-so-out">--:--</span>
+        </div>
+        <div class="divider"></div>
+        <div class="field-grid">
+          <div class="field"><label>Couverts soir</label><input id="f-cs" type="number" inputmode="numeric" min="0" placeholder="0" oninput="oF()"></div>
+          <div class="field"><label>À emporter soir</label><input id="f-es" type="number" inputmode="numeric" min="0" placeholder="0" oninput="oF()"></div>
+        </div>
+      </div>
+
+      <!-- TOTAL -->
+      <div class="sum-bar">
+        <div class="sum-cols">
+          <div class="sum-col"><label>Midi</label><span id="sm">—</span></div>
+          <div class="sum-col"><label>Soir</label><span id="ss">—</span></div>
+          <div class="sum-col"><label>Total</label><span class="hi" id="stot">—</span></div>
+        </div>
+      </div>
+
+      <button class="save-btn" id="savebtn" onclick="saveDay()">Enregistrer la journée</button>
+    </div>
+
+    <!-- CALENDRIER -->
+    <div class="panel" id="p-cal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="nav-arrow" onclick="nC(-1)">‹</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text)" id="cal-title"></div>
+        <div class="nav-arrow" onclick="nC(1)">›</div>
+      </div>
+      <div class="cal-legend">
+        <span>● Travaillé</span>
+        <span>● Repos</span>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+
+    <!-- RÉSUMÉS -->
+    <div class="panel" id="p-sum">
+      <div class="stabs">
+        <button class="stab active" onclick="setST('week',this)">Semaine</button>
+        <button class="stab" onclick="setST('month',this)">Mois</button>
+        <button class="stab" onclick="setST('year',this)">Année</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="nav-arrow" onclick="nSum(-1)">‹</div>
+        <div class="sum-period" id="sum-label"></div>
+        <div class="nav-arrow" onclick="nSum(1)">›</div>
+      </div>
+      <div id="sum-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const DF=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MF=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const PFX='wt6_';
+const IH=30;
+
+const CFG={
+  midi:{
+    in:{h:[9,10,11,12],m:[0,15,30,45]},
+    out:{h:[13,14,15],m:[0,15,30,45]},
+    defIn:{h:1,m:3},defOut:{h:0,m:0}
+  },
+  soir:{
+    in:{h:[17,18,19,20],m:[0,15,30,45,50]},
+    out:{h:[21,22,23,0],m:[0,15,30,45,59]},
+    defIn:{h:1,m:4},defOut:{h:0,m:0}
+  }
+};
+
+let curDate=new Date(),calDate=new Date(),sumTab='week',sumOffset=0;
+function mkSvc(){return{on:false,inH:0,inM:0,outH:0,outM:0}}
+let S={midi:mkSvc(),soir:mkSvc(),cm:'',em:'',cs:'',es:''};
+
+function dk(d){return d.toISOString().slice(0,10)}
+function isT(d){return dk(d)===dk(new Date())}
+function pad(n){return n<10?'0'+n:''+n}
+function toMin(h,m){return h*60+m}
+function hmFmt(m){const h=Math.floor(m/60),mn=m%60;return h+'h'+(mn<10?'0':'')+mn}
+function calcDur(h1,m1,h2,m2){let a=toMin(h1,m1),b=toMin(h2,m2);if(b<=a)b+=1440;return b-a}
+
+function getTime(svc,type){
+  const cfg=CFG[svc][type];
+  return{h:cfg.h[S[svc][type+'H']],m:cfg.m[S[svc][type+'M']]}
+}
+function getDur(svc){
+  if(!S[svc].on)return null;
+  const i=getTime(svc,'in'),o=getTime(svc,'out');
+  return calcDur(i.h,i.m,o.h,o.m);
+}
+function isRepos(){return !S.midi.on&&!S.soir.on}
+
+// ---- DRUMS ----
+function buildDrum(el,items){
+  el.innerHTML='<div class="drum-sel"></div><div class="drum-list"></div>';
+  const list=el.querySelector('.drum-list');
+  [null,null,...items,null,null].forEach(v=>{
+    const d=document.createElement('div');d.className='drum-item';
+    d.textContent=v!==null?pad(v):'';list.appendChild(d);
+  });
+}
+
+function setDrumPos(el,idx){
+  const list=el.querySelector('.drum-list');
+  if(!list)return;
+  list.style.transition='none';
+  list.style.transform=`translateY(${-(idx+2)*IH+44-IH/2}px)`;
+}
+
+function attachDrum(el,svc,type,col){
+  let sy=0,si=0,active=false;
+  const cfg=CFG[svc][type][col];
+  const maxI=cfg.length-1;
+  const key=type+(col==='h'?'H':'M');
+
+  function setI(i){
+    i=Math.max(0,Math.min(maxI,i));
+    S[svc][key]=i;
+    setDrumPos(el,i);
+    updateTV(svc,type);
+  }
+
+  el.addEventListener('mousedown',e=>{
+    if(!S[svc].on)return;
+    sy=e.clientY;si=S[svc][key];active=true;e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!active)return;
+    setI(si+Math.round((sy-e.clientY)/IH));
+  });
+  document.addEventListener('mouseup',()=>{if(active){active=false;rDay();}});
+
+  el.addEventListener('touchstart',e=>{
+    if(!S[svc].on)return;
+    sy=e.touches[0].clientY;si=S[svc][key];active=true;
+  },{passive:true});
+  el.addEventListener('touchmove',e=>{
+    if(!active)return;
+    e.preventDefault();
+    setI(si+Math.round((sy-e.touches[0].clientY)/IH));
+  },{passive:false});
+  el.addEventListener('touchend',()=>{if(active){active=false;rDay();}});
+}
+
+function updateTV(svc,type){
+  const pfx=svc==='midi'?'mi':'so';
+  const t=getTime(svc,type);
+  const el=document.getElementById('tv-'+pfx+'-'+type);
+  el.textContent=pad(t.h)+':'+pad(t.m);
+  el.className='time-val '+(type==='in'?'in':'out')+(S[svc].on?'':' off');
+}
+
+function initDrums(){
+  [['midi','mi'],['soir','so']].forEach(([svc,p])=>{
+    ['in','out'].forEach(type=>{
+      ['h','m'].forEach(col=>{
+        const id='d'+(col==='h'?'h':'m')+'-'+p+'-'+type;
+        const el=document.getElementById(id);
+        buildDrum(el,CFG[svc][type][col]);
+        setDrumPos(el,S[svc][type+(col==='h'?'H':'M')]);
+        attachDrum(el,svc,type,col);
+      });
+      updateTV(svc,type);
+    });
+  });
+}
+
+function toggleSvc(svc){
+  S[svc].on=!S[svc].on;
+  if(S[svc].on){
+    const def=CFG[svc];
+    S[svc].inH=def.defIn.h;S[svc].inM=def.defIn.m;
+    S[svc].outH=def.defOut.h;S[svc].outM=def.defOut.m;
+  }
+  initDrums();rDay();
+}
+
+function oF(){
+  S.cm=document.getElementById('f-cm').value;
+  S.em=document.getElementById('f-em').value;
+  S.cs=document.getElementById('f-cs').value;
+  S.es=document.getElementById('f-es').value;
+}
+
+function rDay(){
+  document.getElementById('dn').textContent=DF[curDate.getDay()];
+  document.getElementById('dd').textContent=curDate.getDate()+' '+MF[curDate.getMonth()]+' '+curDate.getFullYear();
+  document.getElementById('today-pill').innerHTML=isT(curDate)?'<span class="today-pill">Aujourd\'hui</span>':'';
+  document.getElementById('repos-ind').innerHTML=(isRepos()&&load(curDate))?'<span class="repos-badge">Jour de repos</span>':'';
+
+  ['midi','soir'].forEach((svc,i)=>{
+    const id=i===0?'m':'s';
+    document.getElementById('tog-'+svc).className='tog'+(S[svc].on?' on':'');
+    document.getElementById('tog-'+svc).textContent=S[svc].on?'En service':'Travaillé';
+    document.getElementById('svc-'+svc).className='svc'+(S[svc].on?'':' off');
+    ['in','out'].forEach(type=>{
+      const pfx=svc==='midi'?'mi':'so';
+      const dh=document.getElementById('dh-'+pfx+'-'+type);
+      const dm=document.getElementById('dm-'+pfx+'-'+type);
+      setDrumPos(dh,S[svc][type+'H']);
+      setDrumPos(dm,S[svc][type+'M']);
+      updateTV(svc,type);
+      dh.style.cursor=S[svc].on?'ns-resize':'default';
+      dm.style.cursor=S[svc].on?'ns-resize':'default';
+    });
+    const d=getDur(svc);
+    document.getElementById('dur-'+id).textContent=d!==null?hmFmt(d):'—';
+    document.getElementById('s'+id).textContent=d!==null?hmFmt(d):'—';
+  });
+
+  const md=getDur('midi'),sd=getDur('soir');
+  document.getElementById('stot').textContent=(md!==null||sd!==null)?hmFmt((md||0)+(sd||0)):'—';
+
+  document.getElementById('f-cm').value=S.cm||'';
+  document.getElementById('f-em').value=S.em||'';
+  document.getElementById('f-cs').value=S.cs||'';
+  document.getElementById('f-es').value=S.es||'';
+  const b=document.getElementById('savebtn');
+  b.className='save-btn';b.textContent='Enregistrer la journée';
+}
+
+function saveDay(){
+  oF();
+  const data={...S,_repos:isRepos()};
+  save(curDate,data);
+  const b=document.getElementById('savebtn');
+  b.className='save-btn saved';b.textContent='✓ Enregistré';
+  setTimeout(()=>{b.className='save-btn';b.textContent='Enregistrer la journée';},1600);
+}
+
+function nd(n){curDate=new Date(curDate);curDate.setDate(curDate.getDate()+n);loadS();initDrums();rDay();}
+
+// STORAGE
+function load(d){try{const s=localStorage.getItem(PFX+dk(d));return s?JSON.parse(s):null}catch(e){return null}}
+function save(d,data){try{localStorage.setItem(PFX+dk(d),JSON.stringify(data))}catch(e){}}
+function allKeys(){const k=[];try{for(let i=0;i<localStorage.length;i++){const n=localStorage.key(i);if(n&&n.startsWith(PFX))k.push(n.slice(PFX.length))}}catch(e){}return k.sort()}
+function loadS(){const d=load(curDate);if(d)S={...d};else S={midi:mkSvc(),soir:mkSvc(),cm:'',em:'',cs:'',es:''};}
+
+// CALENDAR
+function rCal(){
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  document.getElementById('cal-title').textContent=MF[m]+' '+y;
+  const g=document.getElementById('cal-grid');g.innerHTML='';
+  ['Lu','Ma','Me','Je','Ve','Sa','Di'].forEach(d=>{const e=document.createElement('div');e.className='cdow';e.textContent=d;g.appendChild(e)});
+  const fd=new Date(y,m,1),sd=(fd.getDay()+6)%7;
+  const td=dk(new Date()),sel=dk(curDate);
+  for(let i=0;i<sd;i++){const e=document.createElement('div');e.className='cd empty';g.appendChild(e)}
+  for(let i=1;i<=new Date(y,m+1,0).getDate();i++){
+    const dt=new Date(y,m,i),k=dk(dt),e=document.createElement('div');e.className='cd';
+    const raw=load(dt);
+    if(raw){e.classList.add('has');if(raw._repos)e.classList.add('repos')}
+    if(k===td)e.classList.add('tday');
+    if(k===sel)e.classList.add('sel');
+    e.textContent=i;
+    e.onclick=()=>{curDate=new Date(y,m,i);loadS();initDrums();rDay();rCal();sw('day',document.querySelectorAll('.tab')[0])};
+    g.appendChild(e);
+  }
+}
+function nC(n){calDate=new Date(calDate);calDate.setMonth(calDate.getMonth()+n);rCal()}
+
+// RÉSUMÉS
+function getKeys(tab,offset){
+  const now=new Date();
+  if(tab==='week'){
+    const ref=new Date(now);ref.setDate(now.getDate()+offset*7);
+    const dow=(ref.getDay()+6)%7,mon=new Date(ref),sun=new Date(ref);
+    mon.setDate(ref.getDate()-dow);sun.setDate(mon.getDate()+6);
+    return{start:mon,end:sun,keys:allKeys().filter(k=>k>=dk(mon)&&k<=dk(sun))}
+  }
+  if(tab==='month'){
+    const y=now.getFullYear(),mo=now.getMonth()+offset;
+    const s=new Date(y,mo,1),e=new Date(y,mo+1,0);return{start:s,end:e,keys:allKeys().filter(k=>k>=dk(s)&&k<=dk(e))}
+  }
+  const y=now.getFullYear()+offset,s=new Date(y,0,1),e=new Date(y,11,31);
+  return{start:s,end:e,keys:allKeys().filter(k=>k>=dk(s)&&k<=dk(e))}
+}
+
+function aggreg(keys){
+  let tMins=0,cMidi=0,eMidi=0,cSoir=0,eSoir=0,jours=0,repos=0;const details=[];
+  keys.forEach(k=>{
+    const raw=load({toISOString:()=>k+'T12:00:00'});if(!raw)return;
+    if(raw._repos){repos++;details.push({k,md:0,sd:0,cm:0,em:0,cs:0,es:0,repos:true});return}
+    let md=0,sd=0;
+    if(raw.midi&&raw.midi.on){
+      const ih=CFG.midi.in.h[raw.midi.inH||0],im=CFG.midi.in.m[raw.midi.inM||0];
+      const oh=CFG.midi.out.h[raw.midi.outH||0],om=CFG.midi.out.m[raw.midi.outM||0];
+      md=calcDur(ih,im,oh,om);
+    }
+    if(raw.soir&&raw.soir.on){
+      const ih=CFG.soir.in.h[raw.soir.inH||0],im=CFG.soir.in.m[raw.soir.inM||0];
+      const oh=CFG.soir.out.h[raw.soir.outH||0],om=CFG.soir.out.m[raw.soir.outM||0];
+      sd=calcDur(ih,im,oh,om);
+    }
+    tMins+=md+sd;cMidi+=parseInt(raw.cm)||0;eMidi+=parseInt(raw.em)||0;cSoir+=parseInt(raw.cs)||0;eSoir+=parseInt(raw.es)||0;
+    if(md||sd)jours++;
+    details.push({k,md,sd,cm:parseInt(raw.cm)||0,em:parseInt(raw.em)||0,cs:parseInt(raw.cs)||0,es:parseInt(raw.es)||0,repos:false});
+  });
+  return{tMins,cMidi,eMidi,cSoir,eSoir,jours,repos,details,totalCouverts:cMidi+cSoir,totalEmporter:eMidi+eSoir};
+}
+
+function renderSum(){
+  const info=getKeys(sumTab,sumOffset);
+  let label='';
+  if(sumTab==='week'){const s=info.start,e=info.end;label=s.getDate()+' '+MF[s.getMonth()].slice(0,3)+' → '+e.getDate()+' '+MF[e.getMonth()].slice(0,3)+' '+e.getFullYear()}
+  else if(sumTab==='month')label=MF[info.start.getMonth()]+' '+info.start.getFullYear();
+  else label='Année '+info.start.getFullYear();
+  document.getElementById('sum-label').textContent=label;
+  const ag=aggreg(info.keys);
+  const c=document.getElementById('sum-content');
+  if(!info.keys.length){c.innerHTML='<div class="empty-msg">Aucune donnée pour cette période</div>';return}
+  const avgH=ag.jours?hmFmt(Math.round(ag.tMins/ag.jours)):'—';
+  c.innerHTML=`
+  <div class="big-grid">
+    <div class="big-card"><div class="big-card-l">Heures travaillées</div><div class="big-card-v accent">${hmFmt(ag.tMins)}</div><div class="big-card-sub">${ag.jours} j. · moy. ${avgH}/j</div></div>
+    <div class="big-card"><div class="big-card-l">Jours de repos</div><div class="big-card-v">${ag.repos}</div><div class="big-card-sub">${ag.jours+ag.repos} enregistrés</div></div>
+  </div>
+  <div class="mini-grid">
+    <div class="mini-card"><div class="mini-l">Couverts midi</div><div class="mini-v">${ag.cMidi}</div></div>
+    <div class="mini-card"><div class="mini-l">Couverts soir</div><div class="mini-v">${ag.cSoir}</div></div>
+    <div class="mini-card"><div class="mini-l">Total couverts</div><div class="mini-v">${ag.totalCouverts}</div></div>
+    <div class="mini-card"><div class="mini-l">Emporter midi</div><div class="mini-v">${ag.eMidi}</div></div>
+    <div class="mini-card"><div class="mini-l">Emporter soir</div><div class="mini-v">${ag.eSoir}</div></div>
+    <div class="mini-card"><div class="mini-l">Total emporter</div><div class="mini-v">${ag.totalEmporter}</div></div>
+  </div>
+  <div class="hist-label">Détail par journée</div>
+  <div class="hist-rows">${ag.details.map(r=>{
+    const dt=new Date(r.k+'T12:00:00'),tot=r.md+r.sd;
+    if(r.repos)return`<div class="hr-item repos"><span class="hr-date">${DF[dt.getDay()].slice(0,3)} ${dt.getDate()} ${MF[dt.getMonth()].slice(0,3)}</span><span class="repos-tag">repos</span></div>`;
+    return`<div class="hr-item"><span class="hr-date">${DF[dt.getDay()].slice(0,3)} ${dt.getDate()} ${MF[dt.getMonth()].slice(0,3)}</span><div class="hr-right"><span class="hr-chip"><b>${tot?hmFmt(tot):'—'}</b></span><span class="hr-chip">cvts <b>${r.cm+r.cs}</b></span><span class="hr-chip">emporter <b>${r.em+r.es}</b></span></div></div>`;
+  }).join('')}</div>`;
+}
+
+function setST(t,el){sumTab=t;sumOffset=0;document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderSum()}
+function nSum(n){sumOffset+=n;renderSum()}
+
+function sw(t,el){
+  const panels=['day','cal','sum'];
+  panels.forEach(n=>{document.getElementById('p-'+n).classList.toggle('active',n===t)});
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',panels[i]===t));
+  if(t==='cal'){calDate=new Date(curDate);rCal()}
+  if(t==='sum'){sumOffset=0;renderSum()}
+}
+
+// INIT
+loadS();initDrums();rDay();
+</script>
+</body>
+</html>
