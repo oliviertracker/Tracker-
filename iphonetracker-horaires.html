@@ -27,6 +27,7 @@
   --blue-border: rgba(96,165,250,0.3);
   --amber: #fbbf24;
   --amber-bg: rgba(251,191,36,0.1);
+  --amber-border: rgba(251,191,36,0.3);
   --radius: 12px;
   --radius-sm: 8px;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -109,6 +110,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;color
 .sum-col span{font-size:18px;font-weight:600;color:var(--text)}
 .sum-col span.hi{color:var(--blue)}
 
+/* CA BAR */
+.ca-bar{background:var(--amber-bg);border:0.5px solid var(--amber-border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px}
+.ca-bar-title{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--amber);font-weight:600;margin-bottom:8px}
+.ca-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ca-col label{font-size:10px;color:var(--text2);display:block;margin-bottom:2px}
+.ca-col span{font-size:16px;font-weight:600;color:var(--text)}
+.ca-total-row{margin-top:8px;padding-top:8px;border-top:0.5px solid var(--amber-border);display:flex;justify-content:space-between;align-items:center}
+.ca-total-label{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--amber)}
+.ca-total-val{font-size:20px;font-weight:700;color:var(--amber)}
+
 /* SAVE */
 .save-btn{width:100%;padding:14px;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius);font-size:15px;font-weight:600;color:var(--text);cursor:pointer;letter-spacing:0.02em;transition:all 0.15s;}
 .save-btn:active{transform:scale(0.98);background:var(--bg4)}
@@ -138,11 +149,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;color
 .big-card-l{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text2);margin-bottom:4px}
 .big-card-v{font-size:22px;font-weight:700;color:var(--text)}
 .big-card-v.accent{color:var(--blue)}
+.big-card-v.amber{color:var(--amber)}
 .big-card-sub{font-size:11px;color:var(--text3);margin-top:2px}
-.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .mini-card{background:var(--bg3);border-radius:var(--radius-sm);padding:10px}
 .mini-l{font-size:10px;color:var(--text2);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.06em}
 .mini-v{font-size:17px;font-weight:600;color:var(--text)}
+.mini-v.amber{color:var(--amber)}
+.ca-section{background:var(--amber-bg);border:0.5px solid var(--amber-border);border-radius:var(--radius);padding:12px;margin-bottom:8px}
+.ca-section-title{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--amber);font-weight:600;margin-bottom:8px}
+.ca-section-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.ca-section-col label{font-size:10px;color:var(--text2);display:block;margin-bottom:2px}
+.ca-section-col span{font-size:15px;font-weight:600;color:var(--text)}
+.ca-section-total{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:0.5px solid var(--amber-border)}
+.ca-section-total-l{font-size:11px;color:var(--amber)}
+.ca-section-total-v{font-size:22px;font-weight:700;color:var(--amber)}
 .hist-label{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);padding:8px 0 6px;border-top:0.5px solid var(--border)}
 .hist-rows{display:flex;flex-direction:column;gap:6px}
 .hr-item{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
@@ -151,6 +172,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;color
 .hr-right{display:flex;gap:10px;align-items:center}
 .hr-chip{font-size:11px;color:var(--text2)}
 .hr-chip b{color:var(--text);font-weight:600}
+.hr-chip b.amber{color:var(--amber)}
 .repos-tag{font-size:10px;color:var(--text3);border:0.5px solid var(--border);border-radius:4px;padding:2px 7px}
 .empty-msg{text-align:center;padding:2rem 0;font-size:14px;color:var(--text3)}
 </style>
@@ -257,12 +279,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;color
         </div>
       </div>
 
-      <!-- TOTAL -->
+      <!-- TOTAL HEURES -->
       <div class="sum-bar">
         <div class="sum-cols">
           <div class="sum-col"><label>Midi</label><span id="sm">—</span></div>
           <div class="sum-col"><label>Soir</label><span id="ss">—</span></div>
           <div class="sum-col"><label>Total</label><span class="hi" id="stot">—</span></div>
+        </div>
+      </div>
+
+      <!-- CA ESTIMÉ -->
+      <div class="ca-bar" id="ca-bar">
+        <div class="ca-bar-title">CA estimé</div>
+        <div class="ca-cols">
+          <div class="ca-col"><label>Couverts midi (×18€)</label><span id="ca-midi">—</span></div>
+          <div class="ca-col"><label>Couverts soir (×25€)</label><span id="ca-soir">—</span></div>
+          <div class="ca-col"><label>Emportés (×13€)</label><span id="ca-emp">—</span></div>
+          <div class="ca-col"><label>Couverts total</label><span id="ca-cvt">—</span></div>
+        </div>
+        <div class="ca-total-row">
+          <span class="ca-total-label">Total CA jour</span>
+          <span class="ca-total-val" id="ca-total">—</span>
         </div>
       </div>
 
@@ -307,16 +344,26 @@ const MF=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Se
 const PFX='wt6_';
 const IH=30;
 
+// ---- TARIFS ----
+const TARIF_MIDI=18;
+const TARIF_SOIR=25;
+const TARIF_EMP=13;
+
+// ---- CONFIG DRUMS (minutes en tranches de 5) ----
+const MINS=[0,5,10,15,20,25,30,35,40,45,50,55];
+
 const CFG={
   midi:{
-    in:{h:[9,10,11,12],m:[0,15,30,45]},
-    out:{h:[13,14,15],m:[0,15,30,45]},
-    defIn:{h:1,m:3},defOut:{h:0,m:0}
+    in:{h:[9,10,11,12],m:MINS},
+    out:{h:[13,14,15],m:MINS},
+    defIn:{h:1,m:9},   // 10h45
+    defOut:{h:0,m:0}   // 13h00
   },
   soir:{
-    in:{h:[17,18,19,20],m:[0,15,30,45,50]},
-    out:{h:[21,22,23,0],m:[0,15,30,45,59]},
-    defIn:{h:1,m:4},defOut:{h:0,m:0}
+    in:{h:[17,18,19,20],m:MINS},
+    out:{h:[21,22,23,0],m:MINS},
+    defIn:{h:1,m:10},  // 18h50
+    defOut:{h:0,m:0}   // 21h00
   }
 };
 
@@ -330,6 +377,16 @@ function pad(n){return n<10?'0'+n:''+n}
 function toMin(h,m){return h*60+m}
 function hmFmt(m){const h=Math.floor(m/60),mn=m%60;return h+'h'+(mn<10?'0':'')+mn}
 function calcDur(h1,m1,h2,m2){let a=toMin(h1,m1),b=toMin(h2,m2);if(b<=a)b+=1440;return b-a}
+function fmtEur(n){return n.toFixed(0)+' €'}
+
+// ---- CALCUL CA ----
+function calcCA(cm,em,cs,es){
+  const caMidi=(cm||0)*TARIF_MIDI;
+  const caSoir=(cs||0)*TARIF_SOIR;
+  const caEmp=((em||0)+(es||0))*TARIF_EMP;
+  const caTotal=caMidi+caSoir+caEmp;
+  return{caMidi,caSoir,caEmp,caTotal};
+}
 
 function getTime(svc,type){
   const cfg=CFG[svc][type];
@@ -432,6 +489,23 @@ function oF(){
   S.em=document.getElementById('f-em').value;
   S.cs=document.getElementById('f-cs').value;
   S.es=document.getElementById('f-es').value;
+  rCA();
+}
+
+function rCA(){
+  const cm=parseInt(S.cm)||0;
+  const em=parseInt(S.em)||0;
+  const cs=parseInt(S.cs)||0;
+  const es=parseInt(S.es)||0;
+  const totalEmp=em+es;
+  const hasData=cm||em||cs||es;
+  const ca=calcCA(cm,em,cs,es);
+
+  document.getElementById('ca-midi').textContent=cm?fmtEur(ca.caMidi):'—';
+  document.getElementById('ca-soir').textContent=cs?fmtEur(ca.caSoir):'—';
+  document.getElementById('ca-emp').textContent=totalEmp?fmtEur(ca.caEmp):'—';
+  document.getElementById('ca-cvt').textContent=hasData?(cm+cs)+' cvts':'—';
+  document.getElementById('ca-total').textContent=hasData?fmtEur(ca.caTotal):'—';
 }
 
 function rDay(){
@@ -467,6 +541,9 @@ function rDay(){
   document.getElementById('f-em').value=S.em||'';
   document.getElementById('f-cs').value=S.cs||'';
   document.getElementById('f-es').value=S.es||'';
+
+  rCA();
+
   const b=document.getElementById('savebtn');
   b.className='save-btn';b.textContent='Enregistrer la journée';
 }
@@ -543,11 +620,15 @@ function aggreg(keys){
       const oh=CFG.soir.out.h[raw.soir.outH||0],om=CFG.soir.out.m[raw.soir.outM||0];
       sd=calcDur(ih,im,oh,om);
     }
-    tMins+=md+sd;cMidi+=parseInt(raw.cm)||0;eMidi+=parseInt(raw.em)||0;cSoir+=parseInt(raw.cs)||0;eSoir+=parseInt(raw.es)||0;
+    const cm=parseInt(raw.cm)||0,em=parseInt(raw.em)||0,cs=parseInt(raw.cs)||0,es=parseInt(raw.es)||0;
+    tMins+=md+sd;cMidi+=cm;eMidi+=em;cSoir+=cs;eSoir+=es;
     if(md||sd)jours++;
-    details.push({k,md,sd,cm:parseInt(raw.cm)||0,em:parseInt(raw.em)||0,cs:parseInt(raw.cs)||0,es:parseInt(raw.es)||0,repos:false});
+    details.push({k,md,sd,cm,em,cs,es,repos:false});
   });
-  return{tMins,cMidi,eMidi,cSoir,eSoir,jours,repos,details,totalCouverts:cMidi+cSoir,totalEmporter:eMidi+eSoir};
+  const ca=calcCA(cMidi,eMidi,cSoir,eSoir);
+  return{tMins,cMidi,eMidi,cSoir,eSoir,jours,repos,details,
+    totalCouverts:cMidi+cSoir,totalEmporter:eMidi+eSoir,
+    caMidi:ca.caMidi,caSoir:ca.caSoir,caEmp:ca.caEmp,caTotal:ca.caTotal};
 }
 
 function renderSum(){
@@ -574,11 +655,24 @@ function renderSum(){
     <div class="mini-card"><div class="mini-l">Emporter soir</div><div class="mini-v">${ag.eSoir}</div></div>
     <div class="mini-card"><div class="mini-l">Total emporter</div><div class="mini-v">${ag.totalEmporter}</div></div>
   </div>
+  <div class="ca-section">
+    <div class="ca-section-title">CA estimé</div>
+    <div class="ca-section-grid">
+      <div class="ca-section-col"><label>Midi ×${TARIF_MIDI}€</label><span>${ag.caMidi?fmtEur(ag.caMidi):'—'}</span></div>
+      <div class="ca-section-col"><label>Soir ×${TARIF_SOIR}€</label><span>${ag.caSoir?fmtEur(ag.caSoir):'—'}</span></div>
+      <div class="ca-section-col"><label>Emportés ×${TARIF_EMP}€</label><span>${ag.caEmp?fmtEur(ag.caEmp):'—'}</span></div>
+    </div>
+    <div class="ca-section-total">
+      <span class="ca-section-total-l">Total CA période</span>
+      <span class="ca-section-total-v">${ag.caTotal?fmtEur(ag.caTotal):'—'}</span>
+    </div>
+  </div>
   <div class="hist-label">Détail par journée</div>
   <div class="hist-rows">${ag.details.map(r=>{
     const dt=new Date(r.k+'T12:00:00'),tot=r.md+r.sd;
+    const ca=calcCA(r.cm,r.em,r.cs,r.es);
     if(r.repos)return`<div class="hr-item repos"><span class="hr-date">${DF[dt.getDay()].slice(0,3)} ${dt.getDate()} ${MF[dt.getMonth()].slice(0,3)}</span><span class="repos-tag">repos</span></div>`;
-    return`<div class="hr-item"><span class="hr-date">${DF[dt.getDay()].slice(0,3)} ${dt.getDate()} ${MF[dt.getMonth()].slice(0,3)}</span><div class="hr-right"><span class="hr-chip"><b>${tot?hmFmt(tot):'—'}</b></span><span class="hr-chip">cvts <b>${r.cm+r.cs}</b></span><span class="hr-chip">emporter <b>${r.em+r.es}</b></span></div></div>`;
+    return`<div class="hr-item"><span class="hr-date">${DF[dt.getDay()].slice(0,3)} ${dt.getDate()} ${MF[dt.getMonth()].slice(0,3)}</span><div class="hr-right"><span class="hr-chip"><b>${tot?hmFmt(tot):'—'}</b></span><span class="hr-chip">cvts <b>${r.cm+r.cs}</b></span><span class="hr-chip">CA <b class="amber">${ca.caTotal?fmtEur(ca.caTotal):'—'}</b></span></div></div>`;
   }).join('')}</div>`;
 }
 
